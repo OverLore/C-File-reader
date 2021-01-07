@@ -1,0 +1,21 @@
+#Menu
+backSprite: "backSpriteMenu.png"
+message: "\"Coucou les gens !\""
+message1: "\"Coucou les gens numero 1 !\""
+message2: "\"Coucou les gens numero 2 !\""
+
+#Credits
+backSprite: "backSpriteCredits.png"
+message: "\"Wesh les gens !\""
+message1: "\"Wesh les gens numero 1 !\""
+message2: "\"Wesh les gens numero 2 !\""
+int: 5
+int1: 10
+int2: 15
+float: 5.555
+float1: 10.555
+float2: 15.555
+double: 15.555555555
+ints: [1, 2, 3, 4, 5]
+floats: [1.9, 2.8, 3.7, 4.6, 5.5]
+doubles: [1.12345678910, 2.12345678910, 3.12345678910, 4.12345678910, 5.12345678910]
