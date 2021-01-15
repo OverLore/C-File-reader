@@ -1,6 +1,9 @@
 #ifndef FILEREADER_H
 #define FILEREADER_H
-#include "definitions.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /// @brief Get a string from an opened file
 /// @param _file : Pointer to the opened file to read in

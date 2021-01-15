@@ -83,7 +83,7 @@ void FindCategoryNameInFile(FILE* _file, char* _token)
 		if (c == '\n')
 		{
 			//If scanned line is equals to the given token, break loop
-			if (stricmp(str, _token) == 0)
+			if (strcmp(str, _token) == 0)
 			{
 				c = EOF;
 			}
