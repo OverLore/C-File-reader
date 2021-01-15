@@ -1,0 +1,11 @@
+
+*.vcxproj
+*.filters
+*.user
+Main.c
+*.obj
+*.log
+*.tlog
+*.recipe
+*.idb
+*.pdb
