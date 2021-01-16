@@ -24,6 +24,13 @@ int GetIntInFile(FILE* _file, char* _attribute);
 /// @return The array of int you are searching for
 int* GetIntsArrayInFile(FILE* _file, char* _attribute, int* _arraySize);
 
+/// @brief Get a strings array and it's length from an open file
+/// @param _file Pointer to the opened file to read in
+/// @param _attribute String of what you want ("Category.Attribute")
+/// @param _arraySize Pointer to an int to store length of returned array
+/// @return  The array of strings you are searching for
+char** GetStringArrayInFile(FILE* _file, char* _attribute, int* _arraySize);
+
 /// @brief Get a float from an opened file
 /// @param _file : Pointer to the opened file to read in
 /// @param _attribute : String of what you want ("Category.Attribute")
