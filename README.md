@@ -72,7 +72,7 @@ if (returnedDoubles)
 }
   ```
   
-    Get a string array in file:
+  Get a string array in file:
 ```c
 int size;
 char** returnedStrings = GetStringArrayInFile(file, "Credits.strings", &size);
