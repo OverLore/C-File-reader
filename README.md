@@ -34,33 +34,42 @@ printf("%lf\n", returnedDouble);
   ```c
 int returnedIntsLen = 0;
 int* returnedInts = GetIntsArrayInFile(file, "Credits.ints", &returnedIntsLen);
-for (int i = 0; i < returnedIntsLen; i++)
+if (returnedInts)
 {
-	printf("%d, ", returnedInts[i]);
+	for (int i = 0; i < returnedIntsLen; i++)
+	{
+		printf("%d, ", returnedInts[i]);
+	}
+	free(returnedInts);
 }
-free(returnedInts);
   ```
 
   Get a float array in file:
   ```c
 int returnedFloatsLen = 0;
 float* returnedFloats = GetFloatsArrayInFile(file, "Credits.floats", &returnedFloatsLen);
-for (int i = 0; i < returnedFloatsLen; i++)
+if (returnedFloats)
 {
-	printf("%f, ", returnedFloats[i]);
+	for (int i = 0; i < returnedFloatsLen; i++)
+	{
+		printf("%f, ", returnedFloats[i]);
+	}
+	free(returnedFloats);
 }
-free(returnedFloats);
   ```
 
   Get a double array in file:
 ```c
 int returnedDoublesLen = 0;
 double* returnedDoubles = GetDoublesArrayInFile(file, "Credits.doubles", &returnedDoublesLen);
-for (int i = 0; i < returnedDoublesLen; i++)
+if (returnedDoubles)
 {
-	printf("%lf, ", returnedDoubles[i]);
-}
+	for (int i = 0; i < returnedDoublesLen; i++)
+	{
+		printf("%lf, ", returnedDoubles[i]);
+	}
 	free(returnedDoubles);
+}
   ```
   
 NOTE: You need to open and close a file to do that
