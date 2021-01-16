@@ -72,7 +72,7 @@ void FindCategoryNameInFile(FILE* _file, char* _token)
 	//Set cursor to _file origin
 	fseek(_file, 0, SEEK_SET);
 	char c = 0;
-	char str[50] = { 0 };
+	char* str[50] = { 0 };
 
 	//Read each line
 	while (c != EOF)
@@ -105,7 +105,7 @@ void FindCategoryNameInFile(FILE* _file, char* _token)
 void FindAttributeNameInFile(FILE* _file, char* _token)
 {
 	char c = 0;
-	char str[50] = "";
+	char* str[50] = { 0 };
 
 	//Allocate memory for store string we are searching for
 	char* target = calloc(strlen(_token + 1), sizeof(char));
@@ -138,15 +138,20 @@ void FindAttributeNameInFile(FILE* _file, char* _token)
 			}
 		}
 		//Concatenate string and readed char
-		else
+		else if (c != EOF)
 		{
 			sprintf(str, "%s%c", str, c);
+		}
+		else
+		{
+			printf("Not found\n");
 		}
 
 		//If loop reached another category name flag, nothing was found
 		if (c == '#')
 		{
-			printf("Not found");
+			printf("Not found\n");
+			c = EOF;
 		}
 	}
 }
@@ -159,7 +164,7 @@ char* GetCategoryName(char* _attribute)
 	int strLen = strlen(_attribute);
 
 	//Allocate memory for store string we are searching for
-	str = (char*)calloc(strLen + 1, sizeof(char));
+	str = (char*)calloc(strLen + 2, sizeof(char));
 	//Catrgory name always start with its flag
 	str[0] = '#';
 
@@ -178,9 +183,8 @@ char* GetCategoryName(char* _attribute)
 			sprintf(str, "%s%c", str, c);
 		}
 	}
-
 	//Allocate memory for category name
-	char* categoryName = (char*)calloc(strlen(str) + 1, sizeof(char));
+	char* categoryName = (char*)calloc(strlen(str) + 2, sizeof(char));
 	//Set category name to readed value
 	strcpy(categoryName, str);
 
