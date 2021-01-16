@@ -31,7 +31,8 @@ int* GetIntsArrayInFile(FILE* _file, char* _attribute, int* _arraySize);
 /// @param _file Pointer to the opened file to read in
 /// @param _attribute String of what you want ("Category.Attribute")
 /// @param _arraySize Pointer to an int to store length of returned array
-/// @return  The array of strings you are searching for
+/// @return  The array of strings you are searching for,
+///         or NULL is attribute or category is not found
 char** GetStringArrayInFile(FILE* _file, char* _attribute, int* _arraySize);
 
 /// @brief Get a float from an opened file

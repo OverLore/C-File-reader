@@ -72,6 +72,21 @@ if (returnedDoubles)
 }
   ```
   
+    Get a string array in file:
+```c
+int size;
+char** returnedStrings = GetStringArrayInFile(file, "Credits.strings", &size);
+if (returnedStrings)
+{
+	for (int i = 0; i < size; i++)
+	{
+		printf("%s\n", returnedStrings[i]);
+		free(returnedStrings[i]);
+	}
+	free(returnedStrings);
+}
+  ```
+  
 NOTE: You need to open and close a file to do that
 
 Example of file.txt:
@@ -86,4 +101,5 @@ double: 15.555555555
 ints: [1, 2, 3, 4, 5]
 floats: [1.9, 2.8, 3.7, 4.6, 5.5]
 doubles: [1.12345678910, 2.12345678910, 3.12345678910, 4.12345678910, 5.12345678910]
+strings: ["\"Hello world !\"", "I'm ", "a ", "string ", "array."]
 ```

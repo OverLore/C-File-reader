@@ -345,69 +345,71 @@ char** GetStringArrayInFile(FILE* _file, char* _attribute, int* _arraySize)
 	int* value;
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
-
-	//Free returned strings after use
-	free(categoryName);
-	free(attributeName);
-
-	//Search for the first array delimiter
-	c = fgetc(_file);
-	while (c != '[')
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
 	{
+		//Search for the first array delimiter
 		c = fgetc(_file);
-	}
-
-	//Store current cursor position
-	curPos = ftell(_file);
-	//Count the number of element in the array
-	*_arraySize = GetNumberOfElement(_file);
-	//allocate memory for the array
-	stringArray = (char**)calloc((*_arraySize) + 1, sizeof(char*));
-
-	//Re place cursor in file
-	fseek(_file, curPos, SEEK_SET);
-
-	for (int i = 0; i < *_arraySize; i++)
-	{
-		char* valueStr = "";
-		char* str = "";
-		int valueLen;
-
-		//Search for the first '"'
-		c = fgetc(_file);
-		while (c != '\"')
+		while (c != '[')
 		{
 			c = fgetc(_file);
 		}
 
 		//Store current cursor position
 		curPos = ftell(_file);
-		//Count number of chars of the value to read
-		valueLen = CountCharOfStringInFile(_file);
-		//Allocate memory for this savlue (+1 for '\0')
-		valueStr = (char*)calloc(valueLen + 1, sizeof(char));
-		str = (char*)calloc(valueLen + 1, sizeof(char));
+		//Count the number of element in the array
+		*_arraySize = GetNumberOfElement(_file);
+		//allocate memory for the array
+		stringArray = (char**)calloc((*_arraySize) + 1, sizeof(char*));
+
 		//Re place cursor in file
 		fseek(_file, curPos, SEEK_SET);
 
-		//Add each char between current pos ans the next '"' 
-		//(except for escape sequence)
-		c = fgetc(_file);
-		while (c != '\"')
+		for (int i = 0; i < *_arraySize; i++)
 		{
-			CheckForEscapeSequence(_file, &c);
-			sprintf(str, "%s%c", str, c);
+			char* valueStr = "";
+			char* str = "";
+			int valueLen;
+
+			//Search for the first '"'
 			c = fgetc(_file);
+			while (c != '\"')
+			{
+				c = fgetc(_file);
+			}
+
+			//Store current cursor position
+			curPos = ftell(_file);
+			//Count number of chars of the value to read
+			valueLen = CountCharOfStringInFile(_file);
+			//Allocate memory for this savlue (+1 for '\0')
+			valueStr = (char*)calloc(valueLen + 1, sizeof(char));
+			str = (char*)calloc(valueLen + 1, sizeof(char));
+			//Re place cursor in file
+			fseek(_file, curPos, SEEK_SET);
+
+			//Add each char between current pos ans the next '"' 
+			//(except for escape sequence)
+			c = fgetc(_file);
+			while (c != '\"')
+			{
+				CheckForEscapeSequence(_file, &c);
+				sprintf(str, "%s%c", str, c);
+				c = fgetc(_file);
+			}
+
+			strcpy(valueStr, str);
+
+			free(str);
+			// add string to the array
+			stringArray[i] = valueStr;
 		}
-
-		strcpy(valueStr, str);
-
-		free(str);
-		// add string to the array
-		stringArray[i] = valueStr;
 	}
+
+	//Free returned strings after use
+	free(categoryName);
+	free(attributeName);
+	
 	return stringArray;
 }
 
