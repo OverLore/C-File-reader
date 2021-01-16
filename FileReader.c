@@ -67,12 +67,13 @@ void CheckForEscapeSequence(FILE* _file, char* _c)
 }
 
 //Find token in text file (change cursor position)
-void FindCategoryNameInFile(FILE* _file, char* _token)
+int FindCategoryNameInFile(FILE* _file, char* _token)
 {
 	//Set cursor to _file origin
 	fseek(_file, 0, SEEK_SET);
 	char c = 0;
 	char* str[50] = { 0 };
+	int hasFoundCategory = 0;
 
 	//Read each line
 	while (c != EOF)
@@ -86,6 +87,7 @@ void FindCategoryNameInFile(FILE* _file, char* _token)
 			if (strcmp(str, _token) == 0)
 			{
 				c = EOF;
+				hasFoundCategory = 1;
 			}
 			//else, reset word and continue
 			else
@@ -99,13 +101,23 @@ void FindCategoryNameInFile(FILE* _file, char* _token)
 			sprintf(str, "%s%c", str, c);
 		}
 	}
+	if (hasFoundCategory)
+	{
+		return 1;
+	}
+	else
+	{
+		printf("Category not found\n");
+		return 0;
+	}
 }
 
 //Find attribute in text file (change cursor position)
-void FindAttributeNameInFile(FILE* _file, char* _token)
+int FindAttributeNameInFile(FILE* _file, char* _token)
 {
 	char c = 0;
 	char* str[50] = { 0 };
+	int hasFoundAttribute = 0;
 
 	//Allocate memory for store string we are searching for
 	char* target = calloc(strlen(_token + 1), sizeof(char));
@@ -130,6 +142,7 @@ void FindAttributeNameInFile(FILE* _file, char* _token)
 			if (strstr(str, target))
 			{
 				c = EOF;
+				hasFoundAttribute = 1;
 			}
 			//else, reset word and continue
 			else
@@ -142,17 +155,21 @@ void FindAttributeNameInFile(FILE* _file, char* _token)
 		{
 			sprintf(str, "%s%c", str, c);
 		}
-		else
-		{
-			printf("Not found\n");
-		}
 
 		//If loop reached another category name flag, nothing was found
 		if (c == '#')
 		{
-			printf("Not found\n");
 			c = EOF;
 		}
+	}
+	if (hasFoundAttribute)
+	{
+		return 1;
+	}
+	else
+	{
+		printf("Attribute not found\n");
+		return 0;
 	}
 }
 
@@ -259,44 +276,53 @@ char* GetStringInFile(FILE* _file, char* _attribute)
 	char* str = "";
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
-
-	//Search for the first '"'
-	c = fgetc(_file);
-	while (c != '\"')
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
 	{
+		//Search for the first '"'
 		c = fgetc(_file);
+		while (c != '\"')
+		{
+			c = fgetc(_file);
+		}
+
+		//Store current cursor position
+		curPos = ftell(_file);
+		//Count number of chars of the value to read
+		valueLen = CountCharOfStringInFile(_file);
+		//Allocate memory for this savlue (+1 for '\0')
+		valueStr = (char*)calloc(valueLen + 1, sizeof(char));
+		str = (char*)calloc(valueLen + 1, sizeof(char));
+		//Re place cursor in file
+		fseek(_file, curPos, SEEK_SET);
+
+		//Add each char between current pos ans the next '"' 
+		//(except for escape sequence)
+		c = fgetc(_file);
+		while (c != '\"')
+		{
+			CheckForEscapeSequence(_file, &c);
+			sprintf(str, "%s%c", str, c);
+			c = fgetc(_file);
+		}
+
+		free(categoryName);
+		free(attributeName);
+
+		strcpy(valueStr, str);
+
+		free(str);
+
+		return valueStr;
+	}
+	else
+	{
+		free(categoryName);
+		free(attributeName);
+		return NULL;
 	}
 
-	//Store current cursor position
-	curPos = ftell(_file);
-	//Count number of chars of the value to read
-	valueLen = CountCharOfStringInFile(_file);
-	//Allocate memory for this savlue (+1 for '\0')
-	valueStr = (char*)calloc(valueLen + 1, sizeof(char));
-	str = (char*)calloc(valueLen + 1, sizeof(char));
-	//Re place cursor in file
-	fseek(_file, curPos, SEEK_SET);
-
-	//Add each char between current pos ans the next '"' 
-	//(except for escape sequence)
-	c = fgetc(_file);
-	while (c != '\"')
-	{
-		CheckForEscapeSequence(_file, &c);
-		sprintf(str, "%s%c", str, c);
-		c = fgetc(_file);
-	}
-
-	free(categoryName);
-	free(attributeName);
-
-	strcpy(valueStr, str);
-
-	free(str);
-
-	return valueStr;
+	
 }
 
 //Return the int at specified attribute
@@ -309,15 +335,16 @@ int GetIntInFile(FILE* _file, char* _attribute)
 	int value = 0;
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
+	{
+		//Get the integer
+		(void)fscanf(_file, "%d", &value);
+	}
 
 	//Free returned strings after use
 	free(categoryName);
 	free(attributeName);
-
-	//Get the integer
-	(void)fscanf(_file, "%d", &value);
 
 	return value;
 }
@@ -330,39 +357,40 @@ int* GetIntsArrayInFile(FILE* _file, char* _attribute, int* _arraySize)
 	char* attributeName = GetAttributeName(_attribute);
 	int curPos = 0;
 
-	int* value;
+	int* value = NULL;
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
+	{
+		//Seachr for the first array delimiter
+		c = fgetc(_file);
+		while (c != '[')
+		{
+			c = fgetc(_file);
+		}
+
+		//Store current cursor position
+		curPos = ftell(_file);
+		//Count the number of element in the array
+		*_arraySize = GetNumberOfElement(_file);
+		//Allocate memory to the array 
+		value = (int*)calloc(*_arraySize, sizeof(int));
+
+		//Re place cursor in file
+		fseek(_file, curPos, SEEK_SET);
+
+		//Get each int of the array
+		for (int i = 0; i < *_arraySize; i++)
+		{
+			(void)fscanf(_file, "%d", &value[i]);
+			fseek(_file, 1, SEEK_CUR);
+		}
+	}
 
 	//Free returned strings after use
 	free(categoryName);
 	free(attributeName);
-
-	//Seachr for the first array delimiter
-	c = fgetc(_file);
-	while (c != '[')
-	{
-		c = fgetc(_file);
-	}
-
-	//Store current cursor position
-	curPos = ftell(_file);
-	//Count the number of element in the array
-	*_arraySize = GetNumberOfElement(_file);
-	//Allocate memory to the array 
-	value = (int*)calloc(*_arraySize, sizeof(int));
-
-	//Re place cursor in file
-	fseek(_file, curPos, SEEK_SET);
-
-	//Get each int of the array
-	for (int i = 0; i < *_arraySize; i++)
-	{
-		(void)fscanf(_file, "%d", &value[i]);
-		fseek(_file, 1, SEEK_CUR);
-	}
 
 	return value;
 }
@@ -374,17 +402,18 @@ float GetFloatInFile(FILE* _file, char* _attribute)
 	char* categoryName = GetCategoryName(_attribute);
 	char* attributeName = GetAttributeName(_attribute);
 
-	float value = 0;
+	float value = 0.f;
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
+	{
+			(void)fscanf(_file, "%f", &value);
+	}
 
 	//Free returned strings after use
 	free(categoryName);
 	free(attributeName);
-
-	(void)fscanf(_file, "%f", &value);
 
 	return value;
 }
@@ -397,39 +426,40 @@ float* GetFloatsArrayInFile(FILE* _file, char* _attribute, int* _arraySize)
 	char* attributeName = GetAttributeName(_attribute);
 	int curPos = 0;
 
-	float* value;
+	float* value = NULL;
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
+	{
+		//Seachr for the first array delimiter
+		c = fgetc(_file);
+		while (c != '[')
+		{
+			c = fgetc(_file);
+		}
+
+		//Store current cursor position
+		curPos = ftell(_file);
+		//Count the number of element in the array
+		*_arraySize = GetNumberOfElement(_file);
+		//Allocate memory to the array 
+		value = (float*)calloc(*_arraySize, sizeof(float));
+
+		//Re place cursor in file
+		fseek(_file, curPos, SEEK_SET);
+
+		//Get each float of the array
+		for (int i = 0; i < *_arraySize; i++)
+		{
+			(void)fscanf(_file, "%f", &value[i]);
+			fseek(_file, 1, SEEK_CUR);
+		}
+	}
 
 	//Free returned strings after use
 	free(categoryName);
 	free(attributeName);
-
-	//Seachr for the first array delimiter
-	c = fgetc(_file);
-	while (c != '[')
-	{
-		c = fgetc(_file);
-	}
-
-	//Store current cursor position
-	curPos = ftell(_file);
-	//Count the number of element in the array
-	*_arraySize = GetNumberOfElement(_file);
-	//Allocate memory to the array 
-	value = (float*)calloc(*_arraySize, sizeof(float));
-
-	//Re place cursor in file
-	fseek(_file, curPos, SEEK_SET);
-
-	//Get each float of the array
-	for (int i = 0; i < *_arraySize; i++)
-	{
-		(void)fscanf(_file, "%f", &value[i]);
-		fseek(_file, 1, SEEK_CUR);
-	}
 
 	return value;
 }
@@ -441,17 +471,17 @@ double GetDoubleInFile(FILE* _file, char* _attribute)
 	char* categoryName = GetCategoryName(_attribute);
 	char* attributeName = GetAttributeName(_attribute);
 
-	double value = 0;
+	double value = 0.;
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
-
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
+	{
+		(void)fscanf(_file, "%lf", &value);
+	}
 	//Free returned strings after use
 	free(categoryName);
 	free(attributeName);
-
-	(void)fscanf(_file, "%lf", &value);
 
 	return value;
 }
@@ -464,39 +494,40 @@ double* GetDoublesArrayInFile(FILE* _file, char* _attribute, int* _arraySize)
 	char* attributeName = GetAttributeName(_attribute);
 	int curPos = 0;
 
-	double* value;
+	double* value = NULL;
 
 	//Decompose attribute
-	FindCategoryNameInFile(_file, categoryName);
-	FindAttributeNameInFile(_file, attributeName);
+	if (FindCategoryNameInFile(_file, categoryName)
+		&& FindAttributeNameInFile(_file, attributeName))
+	{
+		//Search for the first array delimiter
+		c = fgetc(_file);
+		while (c != '[')
+		{
+			c = fgetc(_file);
+		}
+
+		//Store current cursor position
+		curPos = ftell(_file);
+		//Count the number of element in the array
+		*_arraySize = GetNumberOfElement(_file);
+		//Allocate memory to the array 
+		value = (double*)calloc(*_arraySize, sizeof(double));
+
+		//Re place cursor in file
+		fseek(_file, curPos, SEEK_SET);
+
+		//Get each double of the array
+		for (int i = 0; i < *_arraySize; i++)
+		{
+			(void)fscanf(_file, "%lf", &value[i]);
+			fseek(_file, 1, SEEK_CUR);
+		}
+	}
 
 	//Free returned strings after use
 	free(categoryName);
 	free(attributeName);
-
-	//Seachr for the first array delimiter
-	c = fgetc(_file);
-	while (c != '[')
-	{
-		c = fgetc(_file);
-	}
-
-	//Store current cursor position
-	curPos = ftell(_file);
-	//Count the number of element in the array
-	*_arraySize = GetNumberOfElement(_file);
-	//Allocate memory to the array 
-	value = (double*)calloc(*_arraySize, sizeof(double));
-
-	//Re place cursor in file
-	fseek(_file, curPos, SEEK_SET);
-
-	//Get each double of the array
-	for (int i = 0; i < *_arraySize; i++)
-	{
-		(void)fscanf(_file, "%lf", &value[i]);
-		fseek(_file, 1, SEEK_CUR);
-	}
 
 	return value;
 }
